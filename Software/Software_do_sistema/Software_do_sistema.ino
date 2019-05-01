@@ -1,5 +1,3 @@
-
-
 /*
  * =====================================================================================================
  * Projeto: Função de medir temperatura
@@ -8,30 +6,57 @@
  * =====================================================================================================
  * 
  * 
- * Logs:
+ * Logs do programa:
  * 
  *  Versão 0.1a (07 de abril de 2019):
  *    -Principais Funções adicionadas;
  *    -Leitura de sensores e mapeamento de hardware;
  *    -Suporte para sensor de presença, monitor real de tempoe leitura de temperatura;
- *  
- *  
+ *     
+ *    Versão 0.1.2a (11 de abril de 2019):
+ *      -Modificação nas funções de temperaturas
+ *      -Correção do BUG de escrita no Monitor Serial
+ *    
+ *    
  *  Versão 0.2a(14 de abril de 2019):
  *    -Adicionado prototipo para sensores magnéticos;
  *  
+ *  
  *  Versão 0.3a (20 de abril de 2019):
  *    -Adicionado testes para monitoramento Serial (comunicação serial);
+ *  
+ *  
+ *  Versão 0.4a (23 de abril de 2019):
+ *    -Adicionado a função para calculo da corrente 
+ *      Obs: O calculo foi feito utilizando como referencia o circuito integrado ACS712 em sua versão x05B. 
+ *            Caso o usuário estiver usando outro modelo, mude a variável sensibilidade levando como referência
+ *            a seguinte tabela:
+ *                º x05B:
+ *                  Sensibilidade = 0.185 
+ *                  
+ *                º x20A:
+ *                  Sensibilidade = 0.1
+ *                
+ *                º X30A:
+ *                  Sensibilidade = 0.066
+ *               
+ *    Versão 0.4.1a (24 de abril de 2019):              
+ *      -Calculo de corrente modificado para uma maior precisão de leitura e escrita de dados 
+ * 
+ *    
+ *    
  *  
  */
 
 
 //==================== Bibliotecas ====================
-#include <DS1307.h> 
+#include <DS1307.h> //Biblioteca do módulo DS1307 (Real Time Clock)
 
 
 //====================  Hardware ======================
 #define internal A0
 #define external A1
+#define ShuntDeCorrente A2
 #define sensorPIR 2
 #define janela_1 7
 #define janela_2 8
@@ -41,6 +66,7 @@
 void temperaturaInterna();
 void temperaturaExterna();
 void presencaAmbiente();
+void CalculoCorrente();
 void verificacaodeTempo();
 void sensorMagnetico1();
 void sensorMagnetico2();
@@ -52,10 +78,10 @@ float temperaturaext = 0.00;
 boolean presenca;
 boolean janela1 = false;
 boolean janela2 = false;
+boolean LuzAmbiente = false;
 
 //Função para chamar o módulo RTC com o objeto "rtc"
 DS1307 rtc(A4,A5);  //SDA/SDL
-
 
 
 //Setup
@@ -87,6 +113,8 @@ void loop() {
   temperaturaInterna();
   delay(1);
   temperaturaExterna();
+  delay(1);
+  CalculoCorrente();
   delay(1);
   presencaAmbiente();
   delay(1);
@@ -153,6 +181,18 @@ void verificacaodeTempo()
 }
 
 
+//Calculo de corrente
+void CalculoCorrente()
+{
+  float sensibilidade = 0.185;
+  float corrente = ((float(analogRead(ShuntDeCorrente))*5/1023) - 2.5)/sensibilidade; 
+  Serial.print("A corrente consumida pelo ar condicionado é: ");
+  Serial.print(corrente);
+  Serial.println(" A");
+}
+
+
+
 //Funções para leitura dos sensores magnéticos
 
 void sensorMagnetico1()
@@ -175,5 +215,5 @@ void sensorMagnetico2()
   else{
     Serial.println("A janela 2 esta fechada.");
   }
-  Serial.println("\n\n");
+  Serial.println("\n");
 }
