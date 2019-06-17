@@ -144,20 +144,70 @@ if(!Serial.available())
   //================Configurações dos Núcleos===============
   Serial.printf("\nsetup() em core: %d", xPortGetCoreID());//Mostra no monitor em qual core o setup() foi chamado
   //xTaskCreatePinnedToCore(pxTaskCode, pcName, usStackDepth, pvParameters, uxPriority, pxCreatedTask, xCoreID)
-  xTaskCreatePinnedToCore(loop2, "loop2", 8192, NULL, 1, NULL, 0);  //Cria a tarefa "loop2()" com prioridade 1, atribuída ao core 0 
+  xTaskCreatePinnedToCore(loop2, "loop2", 8192, NULL, 1, NULL, 0);//Cria a tarefa "loop2()" com prioridade 1, atribuída ao core 0
+  delay(1);
 }
 
 void loop() {                                              //O loop() sempre será atribuído ao core 1 automaticamente pelo sistema, com prioridade 1
-  sensores_E_Modulos();
-  delay(1);
+  Serial.print("connecting to ");
+  Serial.println(host);
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  const int httpPort = 80;
+  if (!client.connect(host, httpPort)) {
+    Serial.println("Falha na Conexão");
+    return;
+  }
+
+  // We now create a URI for the request
+  String url = "/nodemcu/salvar.php?";
+          url += "Aparelho=";
+          url += ID;
+          url += "&IP=";
+          url += WiFi.localIP();
+          url += "&Temperatura_Interna=";
+          url += temperaturaint;
+          url += "&Temperatura_Externa=";
+          url += temperaturaext;
+          url += "&Corrente=";
+          url += 30;
+
+  Serial.print("Requisitando URL: ");
+  Serial.println(url);
+
+  // This will send the request to the server
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+               "Host: " + host + "\r\n" +
+               "Connection: close\r\n\r\n");
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.println(">>> Client Timeout !");
+      client.stop();
+      return;
+    }
+  }
+
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("Conexao Fechada");
+  delay(10000);
 }
 
 void loop2(void*z)                                         //o loop2() será atribuído ao core 0, com prioridade 1
 {
-  //precisa de ao menos um delay de 1ms para evitar o acionamento do timer0 
-  delay(20000);
-  Conexao_Rede();
-  delay(1); 
+  while (1)
+  {
+    sensores_E_Modulos();
+    delay(1);
+  }
+    //precisa de ao menos um delay de 1ms para evitar o acionamento do timer0 
 }
 
 
@@ -210,64 +260,11 @@ void sensores_E_Modulos()
 }
 
 
-void Conexao_Rede()
-{
-  Serial.print("connecting to ");
-  Serial.println(host);
 
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  const int httpPort = 80;
-  if (!client.connect(host, httpPort)) {
-    Serial.println("Falha na Conexão");
-    return;
-  }
-
-  // We now create a URI for the request
-  String url = "/nodemcu/salvar.php?";
-          url += "Aparelho=";
-          url += ID;
-          url += "&IP=";
-          url += WiFi.localIP();
-          url += "&Temperatura_Interna=";
-          url += temperaturaint;
-          url += "&Temperatura_Externa=";
-          url += temperaturaext;
-          url += "&Corrente=";
-          url += 30;
-
-  Serial.print("Requisitando URL: ");
-  Serial.println(url);
-
-  // This will send the request to the server
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" +
-               "Connection: close\r\n\r\n");
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
-      return;
-    }
-  }
-
-  // Read all the lines of the reply from server and print them to Serial
-  while (client.available()) {
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
-  }
-
-  Serial.println();
-  Serial.println("Conexao Fechada");
-  delay(100);
-  return;
-}
 //=======================================================
 
 /*
 void startTimer()
-
 float FiltroADC(int porta)
 {
   float media;
