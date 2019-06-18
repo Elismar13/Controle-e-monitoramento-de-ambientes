@@ -14,8 +14,18 @@
      Versão 0.8a (12 dejunho de 2019):
       -Série de funções adiionadas
         -Sistema WiFi implantado
-        -
-      RESOLVER ERRO DO FREERTOS TA REINICIANDO O MCU
+            
+            Versão 0.8.1b:
+               -Conexão com servidor MYSQL feita;
+               -Dados sendo enviados ao banco de dados 
+            Versão 0.8.2a:
+               -Correção do bugs das temperaturas;
+               -Correção do bug de acionamento de watchdog timer inesperado resolvido
+               
+           Versão 0.8.4b:
+               -Primeiros testes realizados...
+               
+      
 */
 #include <WiFi.h>
 
