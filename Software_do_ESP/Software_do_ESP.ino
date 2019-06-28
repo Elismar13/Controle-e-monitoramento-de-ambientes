@@ -4,13 +4,9 @@
    Autores: Elismar Silva Pereira, Bruna Cavalcanti
    Professor: Moacy
    =====================================================================================================
-
-
    Logs do programa:
-
     Versão 0.1b (24 de maio de 2019):
       -Parte do código adaptado para o ESP32;
-
      Versão 0.8a (12 dejunho de 2019):
       -Série de funções adiionadas
         -Sistema WiFi implantado
@@ -24,6 +20,8 @@
                
            Versão 0.8.4b:
                -Primeiros testes realizados...
+           Versão 0.8.6v:
+               -Novas funcionalidades adicionadas...
                
       
 */
@@ -45,7 +43,7 @@ const char* ID = "Controlador_01";
 const char* ssid     = "Latomia";
 const char* password = "prototipo";
 
-const char* host = "10.1.24.67";
+const char* host = "10.1.24.33";
 boolean troca = false;
 //======================================================
 
@@ -60,7 +58,6 @@ boolean SensoresDigitais(int GPIO);               //Função para ler sensores d
 float Temperaturas(int porta);                    //Cálculo das temperaturas
 float CalculoCorrente(int porta_sensor_corrente); //Cálculo para a corrente do ar condicionado
 float FiltroADC(float valor_da_porta);
-
 //======================================================
 
 
@@ -77,7 +74,7 @@ boolean flag_Sensor = false;
 boolean LuzAmbiente = false;
 String Luz_do_ambiente_BancoD = "Apagada";
 boolean janelas = false;
-
+String Janelas_BancoD = "Fechada";
 //=======================================================
 
 
@@ -188,6 +185,8 @@ void loop() {                                              //O loop() sempre ser
   url += Luz_do_ambiente_BancoD;
   url += "&Corrente=";
   url += 30;
+  url += "&Janelas=";
+  url += Janelas_BancoD;
 
   Serial.print("Requisitando URL: ");
   Serial.println(url);
@@ -234,7 +233,6 @@ void loop2(void*z)                                         //o loop2() será atr
 
 
 //===================== Funções =========================
-
 //Função para medir temperaturas
 float Temperaturas(int porta_sensor_temperatura)
 {
@@ -277,15 +275,18 @@ void sensores_E_Modulos()
     LuzAmbiente = false;
     Luz_do_ambiente_BancoD = "Apagada";
   }
-  if ((SensoresDigitais(janela1) || (SensoresDigitais(janela2)))
-{
-  janelas = true;
+  if (((SensoresDigitais(janela1) || (SensoresDigitais(janela2)))))
+  {
+    janelas = true;
+    Janelas_BancoD = "Aberta";
+  }
+  else {
+    janelas = false;
+    Janelas_BancoD = "Fechada";
+  }
+  delay(500);
 }
-else {
-  janelas = false;
-}
-delay(500);
-}
+
 
 //Função para ler sensores digitais
 boolean SensoresDigitais(int GPIO)
@@ -300,7 +301,6 @@ boolean SensoresDigitais(int GPIO)
   }
   return sensorMedido;
 }
-
 //=======================================================
 
 /*
